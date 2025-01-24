@@ -50,7 +50,8 @@ class Experiment(ABC):
         state_test_range = self.dataset.dynamics.state_test_range()
         x_min, x_max = state_test_range[plot_config['x_axis_idx']]
         y_min, y_max = state_test_range[plot_config['y_axis_idx']]
-        z_min, z_max = state_test_range[plot_config['z_axis_idx']]
+        if plot_config.get('z_axis_idx')!=None:
+            z_min, z_max = state_test_range[plot_config['z_axis_idx']]
 
         times = torch.linspace(0, self.dataset.tMax, time_resolution)
         xs = torch.linspace(x_min, x_max, x_resolution)
@@ -66,7 +67,8 @@ class Experiment(ABC):
                 coords[:, 1:] = torch.tensor(plot_config['state_slices'])
                 coords[:, 1 + plot_config['x_axis_idx']] = xys[:, 0]
                 coords[:, 1 + plot_config['y_axis_idx']] = xys[:, 1]
-                coords[:, 1 + plot_config['z_axis_idx']] = zs[j]
+                if plot_config.get('z_axis_idx')!=None:
+                    coords[:, 1 + plot_config['z_axis_idx']] = zs[j]
 
                 with torch.no_grad():
                     model_results = self.model({'coords': self.dataset.dynamics.coord_to_input(coords.to(device))})
