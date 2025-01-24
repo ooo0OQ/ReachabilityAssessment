@@ -1173,3 +1173,68 @@ class MultiVehicleCollision(Dynamics):
             'y_axis_idx': 1,
             'z_axis_idx': 6,
         }
+
+class AutonomousNavigationRobot(Dynamics):
+    def __init__(self, Radius:float, velocity:float):
+        self.Radius = Radius
+        self.velocity = velocity
+        super().__init__(
+            loss_type='brt_hjivi', set_mode='avoid',
+            state_dim=2, input_dim=3, control_dim=1, disturbance_dim=0,
+            state_mean=[0, 0], 
+            state_var=[2, 2],
+            value_mean=0.25, 
+            value_var=0.5, 
+            value_normto=0.02,
+            deepreach_model="exact",
+        )
+
+    def state_test_range(self):
+        return [
+            [-2, 2],
+            [-2, 2]
+        ]
+
+    def equivalent_wrapped_state(self, state):
+        wrapped_state = torch.clone(state)
+        #wrapped_state[..., 2] = (wrapped_state[..., 2] + math.pi) % (2*math.pi) - math.pi
+        return wrapped_state
+
+    # 2D Autonomous Navigation Robot Dynamics
+    # \dot x    = v \cos \theta
+    # \dot y    = v \sin \theta
+    def dsdt(self, state, control, disturbance):
+        dsdt = torch.zeros_like(state)
+        dsdt[..., 0] = self.velocity*torch.cos(control[..., 0])
+        dsdt[..., 1] = self.velocity*torch.sin(control[..., 0])
+        return dsdt
+    
+    def boundary_fn(self, state):
+        return torch.norm(state[..., :2], dim=-1) - self.Radius
+
+    def sample_target_state(self, num_samples):
+        raise NotImplementedError
+    
+    def cost_fn(self, state_traj):
+        return torch.min(self.boundary_fn(state_traj), dim=-1).values
+    
+    def hamiltonian(self, state, dvds):
+        ham = torch.norm(dvds[...,:2]) * self.velocity
+        return ham
+
+    def optimal_control(self, state, dvds):
+        nm = torch.norm(dvds[..., :2])
+        angle = torch.acos(dvds[..., 0]/nm)
+        angle[dvds[...,1]<0] *= -1
+        return angle
+    
+    def optimal_disturbance(self, state, dvds):
+        return torch.zeros_like(state[...,:0])
+    
+    def plot_config(self):
+        return {
+            'state_slices': [0, 0],
+            'state_labels': ['Px', 'Py'],
+            'x_axis_idx': 0,
+            'y_axis_idx': 1
+        }
