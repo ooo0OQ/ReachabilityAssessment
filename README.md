@@ -30,4 +30,4 @@ python run_experiment.py --mode train --experiment_class DeepReach --dynamics_cl
 
 ## Samples
 
-Trained checkpoints and plots can be found under avoid_sample and reach_sample.
+Trained checkpoints and plots can be found under avoid_sample and reach_sample. In these plots, the red part represents unsafe set/regions that can get to the goal, the blue part represents safe set/regions that can not get to the goal.
