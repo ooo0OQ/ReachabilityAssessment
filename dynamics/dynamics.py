@@ -1175,11 +1175,12 @@ class MultiVehicleCollision(Dynamics):
         }
 
 class AutonomousNavigationRobot(Dynamics):
-    def __init__(self, Radius:float, velocity:float):
+    def __init__(self, Radius:float, velocity:float, avoid: bool):
         self.Radius = Radius
         self.velocity = velocity
+        self.avoid = avoid
         super().__init__(
-            loss_type='brt_hjivi', set_mode='avoid',
+            loss_type='brt_hjivi' if self.avoid else 'brat_hjivi', set_mode='avoid' if self.avoid else 'reach',
             state_dim=2, input_dim=3, control_dim=1, disturbance_dim=0,
             state_mean=[0, 0], 
             state_var=[2, 2],
@@ -1209,23 +1210,45 @@ class AutonomousNavigationRobot(Dynamics):
         dsdt[..., 1] = self.velocity*torch.sin(control[..., 0])
         return dsdt
     
-    def boundary_fn(self, state):
+    def avoid_fn(self, state):
+        if self.avoid:
+            return torch.norm(state[..., :2], dim=-1) - self.Radius
+        x = torch.norm(state[..., :2], dim=-1)
+        x[:] = self.Radius
+        return x
+    
+    def reach_fn(self, state):
         return torch.norm(state[..., :2], dim=-1) - self.Radius
+
+    def boundary_fn(self, state):
+        if self.avoid:
+            return self.avoid_fn(state)
+        else:
+            return self.reach_fn(state)
 
     def sample_target_state(self, num_samples):
         raise NotImplementedError
     
     def cost_fn(self, state_traj):
-        return torch.min(self.boundary_fn(state_traj), dim=-1).values
+        if self.avoid:
+            return torch.min(self.boundary_fn(state_traj), dim=-1).values
+        else:
+            return torch.min(self.reach_fn(state_traj),dim=-1).values
     
     def hamiltonian(self, state, dvds):
-        ham = torch.norm(dvds[...,:2]) * self.velocity
-        return ham
+        if self.avoid:
+            ham = torch.norm(dvds[...,:2],dim=-1) * self.velocity
+            return ham
+        else:
+            ham = torch.norm(dvds[...,:2],dim=-1) * self.velocity
+            return -ham
 
     def optimal_control(self, state, dvds):
         nm = torch.norm(dvds[..., :2])
         angle = torch.acos(dvds[..., 0]/nm)
         angle[dvds[...,1]<0] *= -1
+        if self.avoid==False:
+            angle = math.pi - angle
         return angle
     
     def optimal_disturbance(self, state, dvds):
