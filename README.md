@@ -17,7 +17,7 @@ $$\begin{align*}
 
 where $(p_x,p_y)$ is the position of the robot, $v = 1$ m/s is its (constant) speed, and $\theta$ is the robot heading. The robot state is given by $x = (p_x,p_y)$ and it can directly control its heading $u := \theta$, where $\theta \in [-\pi, \pi]$
 
-## Running an Experiment
+## Running Experiments
 
 Training command for "There is an obstacle of radius 0.5m at the origin that the robot needs to avoid". The results will be under runs/avoid/.
 ```
