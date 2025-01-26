@@ -10,8 +10,11 @@ Please go to [DeepReach](https://github.com/smlbansal/deepreach/tree/public_rele
 
 Consider the following 2D model of an autonomous navigation robot:
 
-$$\begin{equation*} \dot{p_x} = v \cos(\theta)\\
-\dot{p_y} = v \sin(\theta) \end{equation*}$$
+$$\begin{equation*}
+\dot{p_x} = v \cos(\theta)
+
+\dot{p_y} = v \sin(\theta)
+\end{equation*}$$
 
 where $(p_x,p_y)$ is the position of the robot, $v$ = $1$m/s is its (constant) speed, and $\theta$ is the robot heading. The robot state is given by $x = (p_x,p_y)$ and it can directly control its heading $u$ :$= \theta$, where $\theta \in [-\pi, \pi]$
 
