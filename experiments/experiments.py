@@ -79,10 +79,12 @@ class Experiment(ABC):
                 #ax = fig.add_subplot(len(times), len(zs), (j+1) + i*len(zs))
                 ax = fig.add_subplot(len(zs), len(times), (i+1) + j*len(times))
                 if plot_config.get('z_axis_idx')!=None:
-                    ax.set_title('t = %0.2f, %s = %0.2f' % (times[i], plot_config['state_labels'][plot_config['z_axis_idx']], zs[j]))
+                    ax.set_title('t = %0.2f, %s = %0.2f' % (self.dataset.tMax-times[i], plot_config['state_labels'][plot_config['z_axis_idx']], zs[j]))
                 else:
-                    ax.set_title('t = %0.2f' % (times[i]))
-                s = ax.imshow(1*(values.detach().cpu().numpy().reshape(x_resolution, y_resolution).T <= 0), cmap='bwr', origin='lower', extent=(-1., 1., -1., 1.))
+                    ax.set_title('t = %0.2f' % (self.dataset.tMax-times[i]))
+                state_test_range = self.dataset.dynamics.state_test_range()
+                extent = [state_test_range[plot_config['y_axis_idx']][0], state_test_range[plot_config['y_axis_idx']][1], state_test_range[plot_config['x_axis_idx']][0], state_test_range[plot_config['x_axis_idx']][1]]
+                s = ax.imshow(1*(values.detach().cpu().numpy().reshape(x_resolution, y_resolution).T <= 0), cmap='bwr', origin='lower', extent=extent)
                 fig.colorbar(s) 
         fig.savefig(save_path)
         if self.use_wandb:
